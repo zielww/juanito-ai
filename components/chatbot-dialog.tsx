@@ -1,21 +1,27 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Send, Bot } from "lucide-react"
+import { Send, Bot, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { toast } from "@/components/ui/use-toast"
 
 interface ChatbotDialogProps {
   isOpen: boolean
   onClose: () => void
 }
 
+interface Message {
+  role: "user" | "bot"
+  content: string
+}
+
 // Sample chatbot messages
-const INITIAL_MESSAGES = [
+const INITIAL_MESSAGES: Message[] = [
   {
     role: "bot",
-    content: "Hello! I'm your Juanito. How can I help you explore San Juan, Batangas today?",
+    content: "Hello! I'm Juanito, your virtual guide to San Juan, Batangas. How can I help you explore our beautiful town today?",
   },
 ]
 
@@ -23,186 +29,220 @@ const INITIAL_MESSAGES = [
 const SUGGESTIONS = [
   "What are the best beaches to visit?",
   "Recommend a good restaurant",
+  "Tell me about Laiya Beach",
   "What activities are available?",
   "Show me the weather forecast",
+  "When is the town fiesta?",
 ]
 
+// Knowledge base about San Juan, Batangas
+const SAN_JUAN_INFO = {
+  location: "San Juan is a municipality in the province of Batangas, Philippines. It is located on the southwestern part of Luzon island.",
+  beaches: "San Juan is known for its beautiful beaches, particularly in the Laiya area. Popular beaches include Laiya Beach, White Beach, and Calubcub Bay.",
+  activities: "Visitors can enjoy swimming, snorkeling, diving, island hopping, hiking, and various water sports in San Juan.",
+  food: "Local delicacies include lomi (a noodle soup), Batangas beef, and fresh seafood. Popular restaurants include Lomihan sa Pulang Bato and Kuya Oliver's Gotohan.",
+  culture: "San Juan celebrates its town fiesta on June 24, honoring St. John the Baptist. The town has a rich cultural heritage with Spanish influences.",
+  accommodation: "There are various resorts and hotels in San Juan, particularly in Laiya, such as Acuatico Beach Resort, La Luz Beach Resort, and One Laiya.",
+  transportation: "San Juan is accessible by bus from Manila, with a travel time of approximately 3-4 hours.",
+  weather: "San Juan has a tropical climate with a dry season from November to May and a wet season from June to October.",
+  products: "Local products include Batangas coffee, lambanog (coconut wine), and various handicrafts.",
+}
+
 export default function ChatbotDialog({ isOpen, onClose }: ChatbotDialogProps) {
-  const [messages, setMessages] = useState(INITIAL_MESSAGES)
+  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES)
   const [input, setInput] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   // Scroll to bottom of messages
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
+  // Focus input when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        inputRef.current?.focus()
+      }, 100)
+    }
+  }, [isOpen])
+
+  // Reset chat when closed
+  useEffect(() => {
+    if (!isOpen) {
+      setTimeout(() => {
+        setMessages(INITIAL_MESSAGES)
+      }, 300)
+    }
+  }, [isOpen])
+
   // Handle sending a message
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!input.trim()) return
 
-    // Add user message
-    setMessages((prev) => [...prev, { role: "user", content: input }])
-    setInput("")
+    // Add user message to chat
+    const userMessage: Message = { role: "user", content: input };
+    setMessages(prev => [...prev, userMessage]);
+    setInput("");
+    setIsTyping(true);
+    setIsLoading(true);
 
-    // Simulate bot typing
-    setIsTyping(true)
+    try {
+      // Call Google Gemini API
+      const response = await fetchGeminiResponse(input, messages);
+      
+      // Add bot response to chat
+      const botMessage: Message = { role: "bot", content: response };
+      setTimeout(() => {
+        setMessages(prev => [...prev, botMessage]);
+        setIsTyping(false);
+        setIsLoading(false);
+      }, 500); // Small delay for natural feel
+    } catch (error) {
+      console.error("Error fetching response:", error);
+      setIsTyping(false);
+      setIsLoading(false);
+      
+      // Add error message
+      const errorMessage: Message = {
+        role: "bot",
+        content: "I'm sorry, I'm having trouble connecting right now. Please try again later."
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      
+      toast({
+        title: "Connection Error",
+        description: "Could not connect to Juanito's brain. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
-    // Simulate bot response after a delay
-    setTimeout(() => {
-      let response = ""
+  // Fetch response from Google Gemini API
+  const fetchGeminiResponse = async (userInput: string, chatHistory: Message[]): Promise<string> => {
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [...chatHistory, { role: 'user', content: userInput }]
+        }),
+      });
 
-      // Simple pattern matching for demo purposes
-      if (input.toLowerCase().includes("beach")) {
-        response =
-          "Laiya Beach is the most popular beach in San Juan. It has crystal clear waters and white sand. The current occupancy is medium, so it's a good time to visit!"
-      } else if (input.toLowerCase().includes("restaurant") || input.toLowerCase().includes("food")) {
-        response =
-          "I recommend trying the local seafood restaurants near Laiya Beach. They serve fresh catch of the day and traditional Batangas dishes."
-      } else if (input.toLowerCase().includes("weather")) {
-        response = "The weather in San Juan today is sunny with a high of 32°C. Perfect beach weather!"
-      } else if (input.toLowerCase().includes("activit")) {
-        response =
-          "Popular activities in San Juan include swimming, snorkeling, island hopping, and beach volleyball. Many resorts also offer water sports equipment rentals."
-      } else {
-        response =
-          "I'd be happy to help you explore San Juan! You can ask me about beaches, restaurants, activities, or the weather."
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
       }
 
-      setMessages((prev) => [...prev, { role: "bot", content: response }])
-      setIsTyping(false)
-    }, 1500)
+      const data = await response.json();
+      return data.response;
+    } catch (error) {
+      console.error('Error fetching response:', error);
+      throw error;
+    }
+  };
+
+  // Handle suggestion click
+  const handleSuggestionClick = (suggestion: string) => {
+    setInput(suggestion)
+    // Optional: automatically send the suggestion
+    // setInput("")
+    // setMessages(prev => [...prev, { role: "user", content: suggestion }])
+    // handleSendMessage()
+  }
+
+  // Handle key press (Enter to send)
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      handleSendMessage()
+    }
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md md:max-w-lg max-h-[80vh] flex flex-col">
-        <DialogHeader className="border-b pb-2">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md max-h-[80vh] flex flex-col">
+        <DialogHeader>
           <DialogTitle className="flex items-center">
             <Bot className="mr-2 h-5 w-5 text-blue-600" />
-            Juanito
+            Juanito - San Juan Guide
           </DialogTitle>
         </DialogHeader>
 
         {/* Chat messages */}
-        <div className="flex-1 overflow-y-auto py-4 px-2">
-          <div className="space-y-4">
-            {messages.map((message, index) => (
-              <div key={index} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div
-                  className={`
-                    max-w-[80%] rounded-lg px-4 py-2
-                    ${
-                      message.role === "user"
-                        ? "bg-blue-600 text-white rounded-tr-none"
-                        : "bg-gray-100 text-gray-800 rounded-tl-none"
-                    }
-                  `}
-                >
-                  {message.content}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 mb-4 min-h-[300px]">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`max-w-[80%] rounded-lg p-3 ${
+                  message.role === "user"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-800"
+                }`}
+              >
+                {message.content}
+              </div>
+            </div>
+          ))}
+          {isTyping && (
+            <div className="flex justify-start">
+              <div className="max-w-[80%] rounded-lg p-3 bg-gray-100 text-gray-800">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "0ms" }}></div>
+                  <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "150ms" }}></div>
+                  <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "300ms" }}></div>
                 </div>
               </div>
-            ))}
-
-            {/* Typing indicator */}
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 text-gray-800 rounded-lg rounded-tl-none max-w-[80%] px-4 py-2">
-                  <div className="flex space-x-1">
-                    <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0ms" }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "150ms" }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "300ms" }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Auto-scroll anchor */}
-            <div ref={messagesEndRef} />
-          </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Suggestions */}
-        {messages.length < 3 && (
-          <div className="px-4 py-2 border-t">
-            <p className="text-xs text-gray-500 mb-2">Suggested questions:</p>
-            <div className="flex flex-wrap gap-2">
-              {SUGGESTIONS.map((suggestion, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => {
-                    setInput(suggestion)
-                    setMessages((prev) => [...prev, { role: "user", content: suggestion }])
-
-                    // Simulate bot typing
-                    setIsTyping(true)
-
-                    // Simulate bot response after a delay
-                    setTimeout(() => {
-                      let response = ""
-
-                      if (suggestion.includes("beaches")) {
-                        response =
-                          "The best beaches in San Juan are Laiya Beach, Sabangan Beach, and White Beach. Laiya is the most developed with resorts and facilities."
-                      } else if (suggestion.includes("restaurant")) {
-                        response =
-                          "For authentic local cuisine, try Laiya Coco Grove or any of the seafood restaurants along the beach. The grilled fish and Batangas Lomi are must-tries!"
-                      } else if (suggestion.includes("activities")) {
-                        response =
-                          "You can enjoy swimming, snorkeling, jet skiing, banana boat rides, and island hopping tours. Many resorts also offer kayaking and paddleboarding."
-                      } else if (suggestion.includes("weather")) {
-                        response =
-                          "The weather in San Juan today is sunny with a high of 32°C and a low of 26°C. The water temperature is around 28°C, perfect for swimming!"
-                      }
-
-                      setMessages((prev) => [...prev, { role: "bot", content: response }])
-                      setIsTyping(false)
-                      setInput("")
-                    }, 1500)
-                  }}
-                >
-                  {suggestion}
-                </Button>
-              ))}
-            </div>
+        <div className="px-4 mb-4">
+          <div className="flex flex-wrap gap-2">
+            {SUGGESTIONS.map((suggestion, index) => (
+              <button
+                key={index}
+                className="text-xs bg-gray-100 hover:bg-gray-200 rounded-full px-3 py-1 text-gray-700 transition-colors"
+                onClick={() => handleSuggestionClick(suggestion)}
+              >
+                {suggestion}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
 
         {/* Input area */}
-        <DialogFooter className="flex-shrink-0 border-t pt-2">
-          <form
-            className="flex w-full items-center space-x-2"
-            onSubmit={(e) => {
-              e.preventDefault()
-              handleSendMessage()
-            }}
+        <div className="flex items-center space-x-2 p-4 pt-0">
+          <Input
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyPress}
+            placeholder="Ask about San Juan..."
+            className="flex-1"
+            disabled={isLoading}
+          />
+          <Button 
+            onClick={handleSendMessage} 
+            size="icon"
+            disabled={isLoading || !input.trim()}
           >
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your question..."
-              className="flex-1"
-            />
-            <Button type="submit" size="icon" disabled={!input.trim()}>
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
               <Send className="h-4 w-4" />
-            </Button>
-          </form>
-        </DialogFooter>
+            )}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   )
