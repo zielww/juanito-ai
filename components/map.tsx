@@ -806,7 +806,7 @@ const MapComponent: React.FC = () => {
 
   return (
     <div className="w-full h-screen flex flex-col">
-      <div className="flex flex-wrap gap-2 p-2 bg-white shadow-sm z-10">
+      <div className="flex flex-wrap justify-center items-center gap-2 p-2 bg-white shadow-sm z-10">
         <Button
           variant={activeFilter === "all" ? "default" : "outline"}
           onClick={() => setActiveFilter("all")}
