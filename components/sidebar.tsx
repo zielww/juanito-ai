@@ -125,12 +125,94 @@ const POPULAR_PLACES: Place[] = [
   }
 ];
 
+// Add local products data to POPULAR_PLACES
+const LOCAL_PRODUCTS: Place[] = [
+  {
+    id: "palayok",
+    name: "Palayok",
+    type: "crafts",
+    lat: 13.8243, // Near the public market
+    lng: 121.3923,
+    description: "Traditional clay pots handcrafted by local artisans. Used for cooking Filipino dishes like sinigang and adobo.",
+    rating: 4.3,
+    address: "San Juan Public Market, San Juan, Batangas"
+  },
+  {
+    id: "lambanog",
+    name: "Lambanog",
+    type: "beverage",
+    lat: 13.8243, // Near the public market
+    lng: 121.3923,
+    description: "A traditional Filipino alcoholic beverage made from coconut sap. Known for its potent flavor and high alcohol content.",
+    rating: 4.6,
+    address: "San Juan Public Market, San Juan, Batangas"
+  },
+  {
+    id: "suman",
+    name: "Suman",
+    type: "food",
+    lat: 13.8243, // Near the public market
+    lng: 121.3923,
+    description: "A rice cake made from glutinous rice cooked in coconut milk, wrapped in banana leaves. A popular Filipino delicacy.",
+    rating: 4.5,
+    address: "San Juan Public Market, San Juan, Batangas"
+  },
+  {
+    id: "tablea",
+    name: "Tablea",
+    type: "food",
+    lat: 13.8243, // Near the public market
+    lng: 121.3923,
+    description: "Pure cacao tablets used to make traditional Filipino hot chocolate (tsokolate). Rich and bittersweet in flavor.",
+    rating: 4.4,
+    address: "San Juan Public Market, San Juan, Batangas"
+  }
+];
+
+// Add events data
+const EVENTS: Place[] = [
+  {
+    id: "beach-cleanup",
+    name: "Beach Cleanup Drive",
+    type: "event",
+    lat: 13.6633, // Laiya Beach
+    lng: 121.4353,
+    description: "Join the community in cleaning up Laiya Beach. Bring gloves and water. Snacks will be provided. Help preserve the beauty of our beaches!",
+    rating: 4.9,
+    address: "Laiya Beach, San Juan, Batangas"
+  },
+  {
+    id: "food-festival",
+    name: "Local Food Festival",
+    type: "event",
+    lat: 13.8243, // Public Market
+    lng: 121.3923,
+    description: "Experience the flavors of San Juan at this two-day food festival featuring local delicacies, cooking demonstrations, and cultural performances.",
+    rating: 4.8,
+    address: "San Juan Public Market, San Juan, Batangas"
+  },
+  {
+    id: "music-festival",
+    name: "Summer Music Festival",
+    type: "event",
+    lat: 13.7633, // Town center
+    lng: 121.4042,
+    description: "Three days of live music featuring local and national artists. Food stalls, art exhibits, and activities for all ages.",
+    rating: 4.7,
+    address: "San Juan Town Plaza, San Juan, Batangas"
+  }
+];
+
+// Combine all places for search
+const ALL_PLACES = [...POPULAR_PLACES, ...LOCAL_PRODUCTS, ...EVENTS];
+
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<Place[]>([])
   const [showSearchResults, setShowSearchResults] = useState(false)
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null)
+  const [isAnimating, setIsAnimating] = useState(false)
 
   // Function to search places
   const searchPlaces = (query: string) => {
@@ -142,7 +224,7 @@ export default function Sidebar() {
 
     const normalizedQuery = query.toLowerCase().trim();
     
-    const results = POPULAR_PLACES.filter(place => 
+    const results = ALL_PLACES.filter(place => 
       place.name.toLowerCase().includes(normalizedQuery) || 
       place.type.toLowerCase().includes(normalizedQuery) ||
       (place.address && place.address.toLowerCase().includes(normalizedQuery)) ||
@@ -160,10 +242,14 @@ export default function Sidebar() {
     searchPlaces(query);
   };
 
-  // Handle place selection
+  // Handle place selection with animation
   const handlePlaceSelect = (place: Place) => {
     setSelectedPlace(place);
     setShowSearchResults(false);
+    
+    // Add animation effect
+    setIsAnimating(true);
+    setTimeout(() => setIsAnimating(false), 1000);
     
     // Dispatch a custom event to notify the map component
     const event = new CustomEvent('placeSelected', { detail: place });
@@ -176,6 +262,31 @@ export default function Sidebar() {
     setSearchResults([]);
     setShowSearchResults(false);
   };
+
+  // Helper function to check if a card is selected
+  const isSelected = (id: string) => {
+    return selectedPlace?.id === id;
+  };
+
+  // Listen for place selection events from the map
+  useEffect(() => {
+    const handleMapPlaceSelected = (event: CustomEvent<Place>) => {
+      const place = event.detail;
+      setSelectedPlace(place);
+      
+      // Add animation effect
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 1000);
+    };
+
+    // Add event listener for custom event
+    window.addEventListener('mapPlaceSelected', handleMapPlaceSelected as EventListener);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('mapPlaceSelected', handleMapPlaceSelected as EventListener);
+    };
+  }, []);
 
   return (
     <div
@@ -270,10 +381,9 @@ export default function Sidebar() {
       {/* Tabs content */}
       {!collapsed ? (
         <Tabs defaultValue="explore" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid grid-cols-3 mx-4 mt-2">
+          <TabsList className="grid grid-cols-2 mx-4 mt-2">
             <TabsTrigger value="explore">Explore</TabsTrigger>
             <TabsTrigger value="events">Events</TabsTrigger>
-            <TabsTrigger value="saved">Saved</TabsTrigger>
           </TabsList>
 
           <div className="flex-1 overflow-y-auto p-4">
@@ -284,76 +394,107 @@ export default function Sidebar() {
               <div className="space-y-3">
                 {[
                   {
+                    id: "laiya-beach",
                     name: "Laiya Beach",
                     type: "Beach",
                     rating: 4.7,
                     description: "Known for its white sand and clear waters, it's a favorite weekend getaway.",
-                    image: "/images/laiya-beach.jpg"
+                    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSdWppFhrebl5AbOr3YlreKdVCzL-bv6pDQHg&s"
                   },
                   {
+                    id: "acuatico-beach-resort",
                     name: "Acuatico Beach Resort",
                     type: "Resort",
                     rating: 4.8,
                     description: "A luxury beach resort with infinity pools overlooking the ocean.",
-                    image: "/images/acuatico-beach-resort.jpg"
+                    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJAemgxbQgMjKH1KiBJuxS0wMb5BcmdqJ8PQ&s"
                   },
                   {
+                    id: "san-juan-public-market",
                     name: "San Juan Public Market",
                     type: "Market",
                     rating: 4.1,
                     description: "A bustling local market selling fresh produce, seafood, and various goods.",
-                    image: "/images/san-juan-public-market.jpg"
+                    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxEnFl_jSVn_rENh-Jd8kvJI69EOxf831Csw&s"
                   }
-                ].map((place, i) => (
-                  <Card key={i} className="cursor-pointer hover:bg-gray-50">
-                    <div className="flex p-3">
-                      <div className="w-16 h-16 bg-blue-100 rounded-md mr-3 flex-shrink-0">
-                        <img
-                          src={place.image}
-                          alt={place.name}
-                          className="w-full h-full object-cover rounded-md"
-                        />
-                      </div>
-                      <div>
-                        <h3 className="font-medium">{place.name}</h3>
-                        <p className="text-sm text-gray-500">{place.description}</p>
-                        <div className="flex items-center text-sm text-gray-500 mt-1">
-                          <Badge variant="outline" className="mr-2">
-                            {place.type}
-                          </Badge>
-                          <div className="flex items-center">
-                            <Star className="h-3 w-3 text-yellow-500 mr-1 fill-yellow-500" />
-                            <span>{place.rating}</span>
+                ].map((placeCard, i) => {
+                  // Find the corresponding place in POPULAR_PLACES
+                  const fullPlaceData = POPULAR_PLACES.find(p => p.id === placeCard.id);
+                  const isCardSelected = isSelected(placeCard.id);
+                  
+                  return (
+                    <Card 
+                      key={i} 
+                      className={`cursor-pointer transition-all duration-300 ${
+                        isCardSelected 
+                          ? 'bg-blue-50 border-blue-300 shadow-md' 
+                          : 'hover:bg-gray-50'
+                      } ${isAnimating && isCardSelected ? 'animate-pulse' : ''}`}
+                      onClick={() => fullPlaceData && handlePlaceSelect(fullPlaceData)}
+                    >
+                      <div className="flex p-3">
+                        <div className="w-16 h-16 bg-blue-100 rounded-md mr-3 flex-shrink-0">
+                          <img
+                            src={placeCard.image}
+                            alt={placeCard.name}
+                            className="w-full h-full object-cover rounded-md"
+                          />
+                        </div>
+                        <div>
+                          <h3 className="font-medium">{placeCard.name}</h3>
+                          <p className="text-sm text-gray-500">{placeCard.description}</p>
+                          <div className="flex items-center text-sm text-gray-500 mt-1">
+                            <Badge variant="outline" className="mr-2">
+                              {placeCard.type}
+                            </Badge>
+                            <div className="flex items-center">
+                              <Star className="h-3 w-3 text-yellow-500 mr-1 fill-yellow-500" />
+                              <span>{placeCard.rating}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  );
+                })}
               </div>
 
               <h2 className="font-medium mt-6 mb-3">Local Products</h2>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { name: "Palayok", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDJNFLZxEsaWk6GlQsoZtmyPEoD6WqTQanHQ&s", type: "Crafts" },
-                  { name: "Lambanog", image: "https://manila-wine.com/media/catalog/product/cache/ab779e9c28832bdb1d1b6d48074ac569/s/a/san_juan.jpg", type: "Beverage" },
-                  { name: "Suman", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQePnsQUXDL1jYsqHwpeupgwt9HgiQ-af1DXw&s", type: "Food" },
-                  { name: "Tablea", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRRzUXPtVVRaXT3kKGjFP3iHqGKbnIkubQNow&s",  type: "Food" },
-                ].map((product, i) => (
-                  <Card key={i} className="cursor-pointer hover:bg-gray-50">
-                    <div className="p-3">
-                      <div className="w-full h-24 bg-gray-100 rounded-md mb-2">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover rounded-md"
-                        />
+                  { id: "palayok", name: "Palayok", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDJNFLZxEsaWk6GlQsoZtmyPEoD6WqTQanHQ&s", type: "Crafts" },
+                  { id: "lambanog", name: "Lambanog", image: "https://manila-wine.com/media/catalog/product/cache/ab779e9c28832bdb1d1b6d48074ac569/s/a/san_juan.jpg", type: "Beverage" },
+                  { id: "suman", name: "Suman", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQePnsQUXDL1jYsqHwpeupgwt9HgiQ-af1DXw&s", type: "Food" },
+                  { id: "tablea", name: "Tablea", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRRzUXPtVVRaXT3kKGjFP3iHqGKbnIkubQNow&s",  type: "Food" },
+                ].map((product, i) => {
+                  // Find the corresponding product in LOCAL_PRODUCTS
+                  const fullProductData = LOCAL_PRODUCTS.find(p => p.id === product.id);
+                  const isCardSelected = isSelected(product.id);
+                  
+                  return (
+                    <Card 
+                      key={i} 
+                      className={`cursor-pointer transition-all duration-300 ${
+                        isCardSelected 
+                          ? 'bg-blue-50 border-blue-300 shadow-md' 
+                          : 'hover:bg-gray-50'
+                      } ${isAnimating && isCardSelected ? 'animate-pulse' : ''}`}
+                      onClick={() => fullProductData && handlePlaceSelect(fullProductData)}
+                    >
+                      <div className="p-3">
+                        <div className="w-full h-24 bg-gray-100 rounded-md mb-2">
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="w-full h-full object-cover rounded-md"
+                          />
+                        </div>
+                        <h3 className="font-medium text-sm">{product.name}</h3>
+                        <p className="text-xs text-gray-500">{product.type}</p>
                       </div>
-                      <h3 className="font-medium text-sm">{product.name}</h3>
-                      <p className="text-xs text-gray-500">{product.type}</p>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  );
+                })}
               </div>
             </TabsContent>
 
@@ -368,28 +509,42 @@ export default function Sidebar() {
 
               <div className="space-y-3">
                 {[
-                  { name: "Beach Cleanup Drive", date: "Jun 15", type: "Community" },
-                  { name: "Local Food Festival", date: "Jun 22-23", type: "Food" },
-                  { name: "Summer Music Festival", date: "Jul 5-7", type: "Entertainment" },
-                ].map((event, i) => (
-                  <Card key={i} className="cursor-pointer hover:bg-gray-50">
-                    <CardHeader className="p-3 pb-0">
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-base">{event.name}</CardTitle>
-                        <Badge>{event.date}</Badge>
-                      </div>
-                      <CardDescription>{event.type}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-3 pt-2">
-                      <div className="flex justify-between">
-                        <Button variant="outline" size="sm">
-                          Details
-                        </Button>
-                        <Button size="sm">RSVP</Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                  { id: "beach-cleanup", name: "Beach Cleanup Drive", date: "Jun 15", type: "Community" },
+                  { id: "food-festival", name: "Local Food Festival", date: "Jun 22-23", type: "Food" },
+                  { id: "music-festival", name: "Summer Music Festival", date: "Jul 5-7", type: "Entertainment" },
+                ].map((event, i) => {
+                  // Find the corresponding event in EVENTS
+                  const fullEventData = EVENTS.find(e => e.id === event.id);
+                  const isCardSelected = isSelected(event.id);
+                  
+                  return (
+                    <Card 
+                      key={i} 
+                      className={`cursor-pointer transition-all duration-300 ${
+                        isCardSelected 
+                          ? 'bg-blue-50 border-blue-300 shadow-md' 
+                          : 'hover:bg-gray-50'
+                      } ${isAnimating && isCardSelected ? 'animate-pulse' : ''}`}
+                      onClick={() => fullEventData && handlePlaceSelect(fullEventData)}
+                    >
+                      <CardHeader className="p-3 pb-0">
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-base">{event.name}</CardTitle>
+                          <Badge>{event.date}</Badge>
+                        </div>
+                        <CardDescription>{event.type}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="p-3 pt-2">
+                        <div className="flex justify-between">
+                          <Button variant="outline" size="sm">
+                            Details
+                          </Button>
+                          <Button size="sm">RSVP</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </TabsContent>
 
