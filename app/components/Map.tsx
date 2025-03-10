@@ -16,7 +16,6 @@ const center = {
 const Map: React.FC = () => {
   return (
     <div className="my-8">
-      <h2 className="text-2xl font-bold mb-4">Map of San Juan, Batangas</h2>
       <LoadScript googleMapsApiKey="AIzaSyCmphihakge8jdjdfyrD5vBq1gLNopuj4c">
         <GoogleMap
           mapContainerStyle={containerStyle}
