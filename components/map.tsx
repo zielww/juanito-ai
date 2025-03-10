@@ -1032,7 +1032,7 @@ const MapComponent: React.FC = () => {
         
         {/* Selected place popup */}
         {selectedPlace && (
-          <div className="absolute bottom-4 left-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-md mx-auto">
+          <div className="absolute bottom-[120px] left-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-md mx-auto">
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-lg font-bold">{selectedPlace.name}</h3>
