@@ -31,7 +31,7 @@ export default function HomePage() {
           </div>
 
           {/* Chatbot button */}
-          <div className="absolute bottom-6 right-6 z-10">
+          <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-10">
             <ChatbotButton onClick={() => setShowChatbot(true)} />
           </div>
         </div>

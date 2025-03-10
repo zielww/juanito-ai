@@ -15,7 +15,7 @@ interface ChatbotDialogProps {
 const INITIAL_MESSAGES = [
   {
     role: "bot",
-    content: "Hello! I'm your Juan 4 All assistant. How can I help you explore San Juan, Batangas today?",
+    content: "Hello! I'm your Juanito. How can I help you explore San Juan, Batangas today?",
   },
 ]
 
@@ -83,7 +83,7 @@ export default function ChatbotDialog({ isOpen, onClose }: ChatbotDialogProps) {
         <DialogHeader className="border-b pb-2">
           <DialogTitle className="flex items-center">
             <Bot className="mr-2 h-5 w-5 text-blue-600" />
-            Juan 4 All Assistant
+            Juanito
           </DialogTitle>
         </DialogHeader>
 

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import ChatbotButton from "@/components/chatbot-button"
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
@@ -38,8 +39,8 @@ export default function Sidebar() {
               J4A
             </div>
             <div>
-              <h1 className="font-bold text-lg">Juan 4 All</h1>
-              <p className="text-xs text-gray-500">Your Personal Travel Companion</p>
+              <h1 className="font-bold text-lg">Juanito</h1>
+              <p className="text-xs text-gray-500">Personal Travel Companion</p>
             </div>
           </>
         )}
