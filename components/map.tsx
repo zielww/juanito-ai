@@ -955,7 +955,7 @@ const MapComponent: React.FC = () => {
           )}
           
           {/* Map style controls */}
-          <div className="absolute top-10 left-4 bg-white rounded-md shadow-md p-2 z-10">
+          <div className="absolute bottom-10 right-5 bg-white rounded-md shadow-md p-2 z-10">
             <div className="flex flex-col gap-2">
               <Button 
                 size="sm"

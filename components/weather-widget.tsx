@@ -32,7 +32,7 @@ interface WeatherData {
 }
 
 export default function WeatherWidget() {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   const [currentTime, setCurrentTime] = useState("")
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
   const [loading, setLoading] = useState(true)
