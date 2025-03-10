@@ -26,7 +26,7 @@ export default function HomePage() {
           <Map />
 
           {/* Weather widget */}
-          <div className="absolute top-4 right-4 z-10">
+          <div className="absolute top-4 right z-10">
             <WeatherWidget />
           </div>
 
