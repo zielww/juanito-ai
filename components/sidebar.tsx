@@ -1,13 +1,26 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Calendar, Star, Info, ChevronLeft, ChevronRight, MapPin, X } from "lucide-react"
+import { Search, Calendar, Star, Info, ChevronLeft, ChevronRight, MapPin, X, ChevronDown } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import ChatbotButton from "@/components/chatbot-button"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 // Import the Place interface and POPULAR_PLACES array
 interface Place {
@@ -20,6 +33,11 @@ interface Place {
   description?: string
   rating?: number
   address?: string
+  date?: string
+  time?: string
+  endDate?: string
+  organizer?: string
+  recurring?: string
 }
 
 // Sample places data (this would normally be imported from map.tsx)
@@ -169,7 +187,7 @@ const LOCAL_PRODUCTS: Place[] = [
   }
 ];
 
-// Add events data
+// Enhanced events data with proper dates
 const EVENTS: Place[] = [
   {
     id: "beach-cleanup",
@@ -179,7 +197,10 @@ const EVENTS: Place[] = [
     lng: 121.4353,
     description: "Join the community in cleaning up Laiya Beach. Bring gloves and water. Snacks will be provided. Help preserve the beauty of our beaches!",
     rating: 4.9,
-    address: "Laiya Beach, San Juan, Batangas"
+    address: "Laiya Beach, San Juan, Batangas",
+    date: "2023-06-15", // ISO format for easier date handling
+    time: "7:00 AM - 11:00 AM",
+    organizer: "San Juan Environmental Council"
   },
   {
     id: "food-festival",
@@ -189,7 +210,11 @@ const EVENTS: Place[] = [
     lng: 121.3923,
     description: "Experience the flavors of San Juan at this two-day food festival featuring local delicacies, cooking demonstrations, and cultural performances.",
     rating: 4.8,
-    address: "San Juan Public Market, San Juan, Batangas"
+    address: "San Juan Public Market, San Juan, Batangas",
+    date: "2023-06-22", // First day
+    endDate: "2023-06-23", // Last day
+    time: "9:00 AM - 9:00 PM",
+    organizer: "San Juan Tourism Office"
   },
   {
     id: "music-festival",
@@ -199,12 +224,279 @@ const EVENTS: Place[] = [
     lng: 121.4042,
     description: "Three days of live music featuring local and national artists. Food stalls, art exhibits, and activities for all ages.",
     rating: 4.7,
-    address: "San Juan Town Plaza, San Juan, Batangas"
+    address: "San Juan Town Plaza, San Juan, Batangas",
+    date: "2023-07-05", // First day
+    endDate: "2023-07-07", // Last day
+    time: "4:00 PM - 12:00 AM",
+    organizer: "San Juan Cultural Committee"
+  },
+  {
+    id: "fiesta-san-juan",
+    name: "Fiesta San Juan",
+    type: "event",
+    lat: 13.8243, // Town center
+    lng: 121.3923,
+    description: "Annual town fiesta celebrating the feast day of St. John the Baptist. Includes religious processions, cultural performances, and traditional games.",
+    rating: 4.9,
+    address: "San Juan Town Plaza, San Juan, Batangas",
+    date: "2023-06-24", // Feast of St. John the Baptist
+    time: "All Day",
+    organizer: "San Juan Parish Church"
+  },
+  {
+    id: "surfing-competition",
+    name: "Laiya Surfing Cup",
+    type: "event",
+    lat: 13.6633, // Laiya Beach
+    lng: 121.4353,
+    description: "Annual surfing competition featuring local and national surfers. Categories include shortboard, longboard, and bodyboard divisions.",
+    rating: 4.6,
+    address: "Laiya Beach, San Juan, Batangas",
+    date: "2023-08-12",
+    endDate: "2023-08-13",
+    time: "7:00 AM - 5:00 PM",
+    organizer: "Batangas Surfing Association"
+  },
+  {
+    id: "farmers-market",
+    name: "Organic Farmers Market",
+    type: "event",
+    lat: 13.8243, // Public Market
+    lng: 121.3923,
+    description: "Weekly market featuring organic produce, handcrafted goods, and local delicacies from San Juan farmers and artisans.",
+    rating: 4.5,
+    address: "San Juan Public Market, San Juan, Batangas",
+    date: "2023-06-10", // Recurring event
+    recurring: "weekly",
+    time: "6:00 AM - 12:00 PM",
+    organizer: "San Juan Farmers Cooperative"
+  },
+  {
+    id: "art-exhibit",
+    name: "Batangas Art Exhibition",
+    type: "event",
+    lat: 13.7633, // Town center
+    lng: 121.4042,
+    description: "Art exhibition showcasing works by local artists from San Juan and surrounding areas. Paintings, sculptures, and photography inspired by local culture and landscapes.",
+    rating: 4.4,
+    address: "San Juan Community Center, San Juan, Batangas",
+    date: "2023-07-15",
+    endDate: "2023-07-30",
+    time: "10:00 AM - 6:00 PM",
+    organizer: "Batangas Artists Collective"
   }
 ];
 
 // Combine all places for search
 const ALL_PLACES = [...POPULAR_PLACES, ...LOCAL_PRODUCTS, ...EVENTS];
+
+// Helper function to format date
+const formatDate = (dateString: string) => {
+  const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+  return new Date(dateString).toLocaleDateString('en-US', options);
+};
+
+// Helper function to get month name
+const getMonthName = (month: number) => {
+  const date = new Date();
+  date.setMonth(month);
+  return date.toLocaleString('en-US', { month: 'long' });
+};
+
+// Calendar component
+function EventCalendar({ events, onSelectEvent }: { events: any[], onSelectEvent: (event: any) => void }) {
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  
+  // Get days in month
+  const getDaysInMonth = (year: number, month: number) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+  
+  // Get first day of month (0 = Sunday, 1 = Monday, etc.)
+  const getFirstDayOfMonth = (year: number, month: number) => {
+    return new Date(year, month, 1).getDay();
+  };
+  
+  // Navigate to previous month
+  const prevMonth = () => {
+    if (currentMonth === 0) {
+      setCurrentMonth(11);
+      setCurrentYear(currentYear - 1);
+    } else {
+      setCurrentMonth(currentMonth - 1);
+    }
+    setSelectedDate(null);
+  };
+  
+  // Navigate to next month
+  const nextMonth = () => {
+    if (currentMonth === 11) {
+      setCurrentMonth(0);
+      setCurrentYear(currentYear + 1);
+    } else {
+      setCurrentMonth(currentMonth + 1);
+    }
+    setSelectedDate(null);
+  };
+  
+  // Check if date has events
+  const hasEvents = (day: number) => {
+    const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return events.some(event => {
+      // Check if event is on this date
+      if (event.date === dateString) return true;
+      
+      // Check if event spans multiple days
+      if (event.endDate) {
+        const startDate = new Date(event.date);
+        const endDate = new Date(event.endDate);
+        const checkDate = new Date(dateString);
+        return checkDate >= startDate && checkDate <= endDate;
+      }
+      
+      // Check if event is recurring weekly
+      if (event.recurring === 'weekly') {
+        const eventDate = new Date(event.date);
+        const checkDate = new Date(dateString);
+        return eventDate.getDay() === checkDate.getDay();
+      }
+      
+      return false;
+    });
+  };
+  
+  // Get events for selected date
+  const getEventsForDate = (day: number) => {
+    const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return events.filter(event => {
+      // Check if event is on this date
+      if (event.date === dateString) return true;
+      
+      // Check if event spans multiple days
+      if (event.endDate) {
+        const startDate = new Date(event.date);
+        const endDate = new Date(event.endDate);
+        const checkDate = new Date(dateString);
+        return checkDate >= startDate && checkDate <= endDate;
+      }
+      
+      // Check if event is recurring weekly
+      if (event.recurring === 'weekly') {
+        const eventDate = new Date(event.date);
+        const checkDate = new Date(dateString);
+        return eventDate.getDay() === checkDate.getDay();
+      }
+      
+      return false;
+    });
+  };
+  
+  // Handle date selection
+  const handleDateClick = (day: number) => {
+    const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    setSelectedDate(dateString);
+  };
+  
+  // Render calendar
+  const renderCalendar = () => {
+    const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+    const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
+    const days = [];
+    
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} className="h-8 w-8"></div>);
+    }
+    
+    // Add days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const isToday = new Date().toISOString().split('T')[0] === dateString;
+      const isSelected = selectedDate === dateString;
+      const hasEventOnDay = hasEvents(day);
+      
+      days.push(
+        <div 
+          key={day} 
+          className={`h-8 w-8 flex items-center justify-center rounded-full cursor-pointer relative
+            ${isToday ? 'bg-blue-100 text-blue-800' : ''}
+            ${isSelected ? 'bg-blue-600 text-white' : ''}
+            ${!isToday && !isSelected && hasEventOnDay ? 'font-bold' : ''}
+            ${!isToday && !isSelected ? 'hover:bg-gray-100' : ''}
+          `}
+          onClick={() => handleDateClick(day)}
+        >
+          {day}
+          {hasEventOnDay && !isSelected && (
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
+          )}
+        </div>
+      );
+    }
+    
+    return days;
+  };
+  
+  return (
+    <div className="bg-white rounded-lg p-4">
+      {/* Calendar header */}
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="font-medium">{getMonthName(currentMonth)} {currentYear}</h3>
+        <div className="flex space-x-2">
+          <Button variant="outline" size="sm" onClick={prevMonth}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={nextMonth}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      
+      {/* Calendar grid */}
+      <div className="grid grid-cols-7 gap-1 mb-4">
+        {/* Day names */}
+        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+          <div key={i} className="h-8 w-8 flex items-center justify-center text-gray-500 text-sm">
+            {day}
+          </div>
+        ))}
+        
+        {/* Calendar days */}
+        {renderCalendar()}
+      </div>
+      
+      {/* Selected date events */}
+      {selectedDate && (
+        <div className="mt-4 border-t pt-4">
+          <h4 className="font-medium mb-2">{formatDate(selectedDate)}</h4>
+          {getEventsForDate(parseInt(selectedDate.split('-')[2])).length > 0 ? (
+            <div className="space-y-2">
+              {getEventsForDate(parseInt(selectedDate.split('-')[2])).map((event, i) => (
+                <div 
+                  key={i} 
+                  className="p-2 bg-gray-50 rounded cursor-pointer hover:bg-gray-100"
+                  onClick={() => onSelectEvent(event)}
+                >
+                  <div className="flex items-start">
+                    <div className="w-2 h-2 rounded-full bg-blue-600 mt-1.5 mr-2"></div>
+                    <div>
+                      <p className="font-medium text-sm">{event.name}</p>
+                      <p className="text-xs text-gray-500">{event.time}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">No events scheduled for this day</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
@@ -213,6 +505,7 @@ export default function Sidebar() {
   const [showSearchResults, setShowSearchResults] = useState(false)
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null)
   const [isAnimating, setIsAnimating] = useState(false)
+  const [showCalendar, setShowCalendar] = useState(false)
 
   // Function to search places
   const searchPlaces = (query: string) => {
@@ -287,6 +580,16 @@ export default function Sidebar() {
       window.removeEventListener('mapPlaceSelected', handleMapPlaceSelected as EventListener);
     };
   }, []);
+
+  // Handle event selection from calendar
+  const handleEventSelect = (event: any) => {
+    // Find the corresponding event in EVENTS
+    const fullEventData = EVENTS.find(e => e.id === event.id);
+    if (fullEventData) {
+      handlePlaceSelect(fullEventData);
+    }
+    setShowCalendar(false);
+  };
 
   return (
     <div
@@ -501,7 +804,11 @@ export default function Sidebar() {
             <TabsContent value="events" className="mt-0">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-medium">Upcoming Events</h2>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowCalendar(true)}
+                >
                   <Calendar className="h-4 w-4 mr-2" />
                   Calendar
                 </Button>
@@ -512,6 +819,7 @@ export default function Sidebar() {
                   { id: "beach-cleanup", name: "Beach Cleanup Drive", date: "Jun 15", type: "Community" },
                   { id: "food-festival", name: "Local Food Festival", date: "Jun 22-23", type: "Food" },
                   { id: "music-festival", name: "Summer Music Festival", date: "Jul 5-7", type: "Entertainment" },
+                  { id: "fiesta-san-juan", name: "Fiesta San Juan", date: "Jun 24", type: "Cultural" },
                 ].map((event, i) => {
                   // Find the corresponding event in EVENTS
                   const fullEventData = EVENTS.find(e => e.id === event.id);
@@ -578,6 +886,26 @@ export default function Sidebar() {
       <div className={`p-4 border-t ${collapsed ? "hidden" : "block"}`}>
         <ChatbotButton onClick={() => {}} />
       </div>
+
+      {/* Calendar Dialog */}
+      <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Event Calendar</DialogTitle>
+            <DialogDescription>
+              View and select events happening in San Juan
+            </DialogDescription>
+          </DialogHeader>
+          
+          <EventCalendar events={EVENTS} onSelectEvent={handleEventSelect} />
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCalendar(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
