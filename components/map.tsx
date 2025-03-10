@@ -804,6 +804,23 @@ const MapComponent: React.FC = () => {
     });
   }, [places]);
 
+  // Listen for place selection events from the sidebar
+  useEffect(() => {
+    const handlePlaceSelected = (event: CustomEvent<Place>) => {
+      const place = event.detail;
+      setSelectedPlace(place);
+      flyToLocation(place.lat, place.lng, 16);
+    };
+
+    // Add event listener for custom event
+    window.addEventListener('placeSelected', handlePlaceSelected as EventListener);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('placeSelected', handlePlaceSelected as EventListener);
+    };
+  }, [flyToLocation]);
+
   return (
     <div className="w-full h-screen flex flex-col">
       <div className="flex flex-wrap justify-center gap-2 p-2 bg-white shadow-sm z-10">
