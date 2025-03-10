@@ -72,22 +72,41 @@ export default function Sidebar() {
               {/* Featured places */}
               <div className="space-y-3">
                 {[
-                  { name: "Laiya Beach", type: "Beach", rating: 4.8 },
-                  { name: "Acuatico Beach Resort", type: "Resort", rating: 4.6 },
-                  { name: "Local Seafood Festival", type: "Event", rating: 4.7 },
+                  {
+                    name: "Laiya Beach",
+                    type: "Beach",
+                    rating: 4.7,
+                    description: "Known for its white sand and clear waters, it's a favorite weekend getaway.",
+                    image: "https://www.thepinaysolobackpacker.com/wp-content/uploads/2023/07/laiya-beach-resorts-cover-4-FINAL.jpg"
+                  },
+                  {
+                    name: "Acuatico Beach Resort",
+                    type: "Resort",
+                    rating: 4.8,
+                    description: "A luxury beach resort with infinity pools overlooking the ocean.",
+                    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRneGSHjP7clL1K4q1bPYQ5iOM9sZXy1_a2dA&s"
+                  },
+                  {
+                    name: "San Juan Public Market",
+                    type: "Market",
+                    rating: 4.1,
+                    description: "A bustling local market selling fresh produce, seafood, and various goods.",
+                    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxEnFl_jSVn_rENh-Jd8kvJI69EOxf831Csw&s"
+                  }
                 ].map((place, i) => (
                   <Card key={i} className="cursor-pointer hover:bg-gray-50">
                     <div className="flex p-3">
                       <div className="w-16 h-16 bg-blue-100 rounded-md mr-3 flex-shrink-0">
                         <img
-                          src={`/placeholder.svg?height=64&width=64`}
+                          src={place.image}
                           alt={place.name}
                           className="w-full h-full object-cover rounded-md"
                         />
                       </div>
                       <div>
                         <h3 className="font-medium">{place.name}</h3>
-                        <div className="flex items-center text-sm text-gray-500">
+                        <p className="text-sm text-gray-500">{place.description}</p>
+                        <div className="flex items-center text-sm text-gray-500 mt-1">
                           <Badge variant="outline" className="mr-2">
                             {place.type}
                           </Badge>
@@ -105,16 +124,16 @@ export default function Sidebar() {
               <h2 className="font-medium mt-6 mb-3">Local Products</h2>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { name: "Handcrafted Souvenirs", type: "Crafts" },
-                  { name: "Fresh Seafood Market", type: "Food" },
-                  { name: "Local Coffee", type: "Beverage" },
-                  { name: "Batangas Lomi", type: "Food" },
+                  { name: "Palayok", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDJNFLZxEsaWk6GlQsoZtmyPEoD6WqTQanHQ&s", type: "Crafts" },
+                  { name: "Lambanog", image: "https://manila-wine.com/media/catalog/product/cache/ab779e9c28832bdb1d1b6d48074ac569/s/a/san_juan.jpg", type: "Beverage" },
+                  { name: "Suman", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQePnsQUXDL1jYsqHwpeupgwt9HgiQ-af1DXw&s", type: "Food" },
+                  { name: "Tablea", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRRzUXPtVVRaXT3kKGjFP3iHqGKbnIkubQNow&s",  type: "Food" },
                 ].map((product, i) => (
                   <Card key={i} className="cursor-pointer hover:bg-gray-50">
                     <div className="p-3">
                       <div className="w-full h-24 bg-gray-100 rounded-md mb-2">
                         <img
-                          src={`/placeholder.svg?height=96&width=120`}
+                          src={product.image}
                           alt={product.name}
                           className="w-full h-full object-cover rounded-md"
                         />
