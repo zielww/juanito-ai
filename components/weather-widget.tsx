@@ -319,7 +319,7 @@ export default function WeatherWidget() {
   }
 
   return (
-    <Card className={`transition-all duration-300 ${expanded ? "w-64" : "w-auto"} absolute right-[15.5rem] top-12`}>
+    <Card className={`transition-all duration-300 ${expanded ? "w-64" : "w-auto"} absolute right-[26rem] top-12`}>
       <CardContent className="p-3">
         {expanded && weatherData ? (
           <div>

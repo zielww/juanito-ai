@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import Image from "next/image"
 import ChatbotButton from "@/components/chatbot-button"
 import {
   Dialog,
@@ -191,42 +192,42 @@ const LOCAL_PRODUCTS: Place[] = [
 const EVENTS: Place[] = [
   {
     id: "beach-cleanup",
-    name: "Beach Cleanup Drive",
+    name: "Beach Cleanup Drive🏖️",
     type: "event",
     lat: 13.6633, // Laiya Beach
     lng: 121.4353,
     description: "Join the community in cleaning up Laiya Beach. Bring gloves and water. Snacks will be provided. Help preserve the beauty of our beaches!",
     rating: 4.9,
     address: "Laiya Beach, San Juan, Batangas",
-    date: "2023-06-15", // ISO format for easier date handling
+    date: "2025-06-15", // ISO format for easier date handling
     time: "7:00 AM - 11:00 AM",
     organizer: "San Juan Environmental Council"
   },
   {
     id: "food-festival",
-    name: "Local Food Festival",
+    name: "Scuba Diving🤿",
     type: "event",
-    lat: 13.8243, // Public Market
-    lng: 121.3923,
-    description: "Experience the flavors of San Juan at this two-day food festival featuring local delicacies, cooking demonstrations, and cultural performances.",
+    lat: 13.6633, // Public Market
+    lng: 121.4353,
+    description: "Experience the underwater world of San Juan",
     rating: 4.8,
-    address: "San Juan Public Market, San Juan, Batangas",
-    date: "2023-06-22", // First day
-    endDate: "2023-06-23", // Last day
+    address: "Laiya Beach, San Juan, Batangas",
+    date: "2025-06-22", // First day
+    endDate: "2025-06-23", // Last day
     time: "9:00 AM - 9:00 PM",
     organizer: "San Juan Tourism Office"
   },
   {
     id: "music-festival",
-    name: "Summer Music Festival",
+    name: "Mangrove Planting",
     type: "event",
-    lat: 13.7633, // Town center
-    lng: 121.4042,
-    description: "Three days of live music featuring local and national artists. Food stalls, art exhibits, and activities for all ages.",
+    lat: 13.7623, // Town center
+    lng: 121.4326,
+    description: "Three days of planting mangroves in San Juan",
     rating: 4.7,
-    address: "San Juan Town Plaza, San Juan, Batangas",
-    date: "2023-07-05", // First day
-    endDate: "2023-07-07", // Last day
+    address: "Acuatico Beach Resort, San Juan, Batangas",
+    date: "2025-07-05", // First day
+    endDate: "2025-07-07", // Last day
     time: "4:00 PM - 12:00 AM",
     organizer: "San Juan Cultural Committee"
   },
@@ -239,7 +240,7 @@ const EVENTS: Place[] = [
     description: "Annual town fiesta celebrating the feast day of St. John the Baptist. Includes religious processions, cultural performances, and traditional games.",
     rating: 4.9,
     address: "San Juan Town Plaza, San Juan, Batangas",
-    date: "2023-06-24", // Feast of St. John the Baptist
+    date: "2023-05-16", // Feast of St. John the Baptist
     time: "All Day",
     organizer: "San Juan Parish Church"
   },
@@ -252,7 +253,7 @@ const EVENTS: Place[] = [
     description: "Annual surfing competition featuring local and national surfers. Categories include shortboard, longboard, and bodyboard divisions.",
     rating: 4.6,
     address: "Laiya Beach, San Juan, Batangas",
-    date: "2023-08-12",
+    date: "2025-08-12",
     endDate: "2023-08-13",
     time: "7:00 AM - 5:00 PM",
     organizer: "Batangas Surfing Association"
@@ -266,7 +267,7 @@ const EVENTS: Place[] = [
     description: "Weekly market featuring organic produce, handcrafted goods, and local delicacies from San Juan farmers and artisans.",
     rating: 4.5,
     address: "San Juan Public Market, San Juan, Batangas",
-    date: "2023-06-10", // Recurring event
+    date: "2025-06-10", // Recurring event
     recurring: "weekly",
     time: "6:00 AM - 12:00 PM",
     organizer: "San Juan Farmers Cooperative"
@@ -280,7 +281,7 @@ const EVENTS: Place[] = [
     description: "Art exhibition showcasing works by local artists from San Juan and surrounding areas. Paintings, sculptures, and photography inspired by local culture and landscapes.",
     rating: 4.4,
     address: "San Juan Community Center, San Juan, Batangas",
-    date: "2023-07-15",
+    date: "2025-07-15",
     endDate: "2023-07-30",
     time: "10:00 AM - 6:00 PM",
     organizer: "Batangas Artists Collective"
@@ -615,7 +616,7 @@ export default function Sidebar() {
         ) : (
           <>
             <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
-              J4A
+              <Image src="/logo.jpg" alt="Juanito" className="rounded-full w-full h-full" width={32} height={32} />
             </div>
             <div>
               <h1 className="font-bold text-lg">Juanito</h1>
@@ -816,10 +817,10 @@ export default function Sidebar() {
 
               <div className="space-y-3">
                 {[
-                  { id: "beach-cleanup", name: "Beach Cleanup Drive", date: "Jun 15", type: "Community" },
-                  { id: "food-festival", name: "Local Food Festival", date: "Jun 22-23", type: "Food" },
-                  { id: "music-festival", name: "Summer Music Festival", date: "Jul 5-7", type: "Entertainment" },
-                  { id: "fiesta-san-juan", name: "Fiesta San Juan", date: "Jun 24", type: "Cultural" },
+                  { id: "beach-cleanup", name: "Beach Cleanup Drive🏖️", date: "Jun 15", type: "Community" },
+                  { id: "food-festival", name: "Scuba Diving🤿", date: "Jun 22-23", type: "Food" },
+                  { id: "music-festival", name: "Mangrove Planting🌱", date: "Jul 5-7", type: "Entertainment" },
+                  { id: "fiesta-san-juan", name: "Fiesta San Juan🎉", date: "May 16", type: "Cultural" },
                 ].map((event, i) => {
                   // Find the corresponding event in EVENTS
                   const fullEventData = EVENTS.find(e => e.id === event.id);

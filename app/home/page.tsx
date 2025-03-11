@@ -13,7 +13,7 @@ export default function Home() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
-            <MapPin className="h-6 w-6 text-primary" />
+            <Image src="/logo.jpg" alt="Juanito" className="rounded-full w-10 h-10" width={32} height={32} />
             <span className="text-xl font-bold">Juanito</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
@@ -359,7 +359,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
               <div>
                 <Image
-                  src="/image.png"
+                  src="/logo.jpg"
                   alt="Sustainable Tourism"
                   width={500}
                   height={500}
